@@ -1,1 +1,208 @@
-
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prazos de Instalação — Vero</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#FFF0F4; --surface:#FFFFFF; --border:#F5D0DA; --text:#1A1A18; --muted:#9A7880; --brand:#F0185A;
+    --d0-bg:#E6F4EC; --d0-fg:#166534; --d0-dot:#22C55E;
+    --d1-bg:#EBF3FF; --d1-fg:#1E40AF; --d1-dot:#3B82F6;
+    --d2-bg:#FEF3C7; --d2-fg:#92400E; --d2-dot:#F59E0B;
+    --d3-bg:#FEE2E2; --d3-fg:#991B1B; --d3-dot:#EF4444;
+    --vz-bg:#F3F3F0; --vz-fg:#52504D; --vz-dot:#A8A69F;
+  }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  header { background:#F0185A; padding:18px 40px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+  .logo-text { font-size:24px; font-weight:700; color:#fff; letter-spacing:-0.5px; display:flex; align-items:center; gap:3px; }
+  .logo-dot { width:8px; height:8px; border-radius:50%; background:#FFA630; display:inline-block; }
+  .header-divider { width:1px; height:32px; background:rgba(255,255,255,0.3); }
+  header h1 { font-size:13px; font-weight:400; color:rgba(255,255,255,0.80); letter-spacing:0.07em; text-transform:uppercase; }
+  .header-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .sync-status { font-size:11px; color:rgba(255,255,255,0.65); }
+  .btn-refresh { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); color:#fff; font-family:'Inter',sans-serif; font-size:13px; font-weight:500; padding:8px 16px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:7px; transition:background 0.15s; }
+  .btn-refresh:hover { background:rgba(255,255,255,0.28); }
+  .btn-refresh.loading svg { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .summary-bar { background:#d4144f; padding:12px 40px 16px; display:flex; gap:8px; flex-wrap:wrap; }
+  .pill { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.18); border-radius:20px; padding:5px 12px; font-size:12px; color:rgba(255,255,255,0.8); cursor:pointer; transition:background 0.15s; user-select:none; }
+  .pill:hover,.pill.active { background:rgba(255,255,255,0.26); border-color:rgba(255,255,255,0.4); color:#fff; }
+  .pill .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .pill .count { font-family:'DM Mono',monospace; font-size:11px; opacity:0.7; margin-left:2px; }
+  .controls { padding:20px 40px 0; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .search-wrap { position:relative; flex:1; min-width:200px; max-width:340px; }
+  .search-wrap svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; }
+  input[type=text] { width:100%; padding:9px 12px 9px 36px; border:1px solid var(--border); border-radius:8px; font-family:'Inter',sans-serif; font-size:13px; background:var(--surface); color:var(--text); outline:none; transition:border-color 0.15s; }
+  input[type=text]:focus { border-color:var(--brand); }
+  input::placeholder { color:var(--muted); }
+  .result-count { font-size:12px; color:var(--muted); margin-left:auto; }
+  .last-update { font-size:11px; color:var(--muted); }
+  .loading-bar { height:3px; background:#F5D0DA; display:none; }
+  .loading-bar.active { display:block; background: linear-gradient(90deg, #F0185A 0%, #ff6b9d 50%, #F0185A 100%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  .grid-wrap { padding:16px 40px 40px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:13px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; transition:box-shadow 0.15s,transform 0.15s; }
+  .card:hover { box-shadow:0 4px 16px rgba(240,24,90,0.10); transform:translateY(-1px); }
+  .card-city { font-size:13px; font-weight:500; color:var(--text); line-height:1.3; }
+  .badge { display:flex; align-items:center; gap:5px; border-radius:6px; padding:3px 9px; font-family:'DM Mono',monospace; font-size:11px; font-weight:500; flex-shrink:0; white-space:nowrap; }
+  .badge .dot { width:6px; height:6px; border-radius:50%; }
+  .d0{background:var(--d0-bg);color:var(--d0-fg);} .d0 .dot{background:var(--d0-dot);}
+  .d1{background:var(--d1-bg);color:var(--d1-fg);} .d1 .dot{background:var(--d1-dot);}
+  .d2{background:var(--d2-bg);color:var(--d2-fg);} .d2 .dot{background:var(--d2-dot);}
+  .d3{background:var(--d3-bg);color:var(--d3-fg);} .d3 .dot{background:var(--d3-dot);}
+  .vz{background:var(--vz-bg);color:var(--vz-fg);} .vz .dot{background:var(--vz-dot);}
+  .state-msg { grid-column:1/-1; text-align:center; padding:60px 0; color:var(--muted); font-size:14px; }
+  .state-msg.error { color:#991B1B; }
+  .alert-strip { margin:12px 40px 0; background:#FEF3C7; border:1px solid #FCD34D; border-radius:8px; padding:10px 14px; font-size:12px; color:#92400E; display:none; }
+  .alert-strip.show { display:block; }
+  @media(max-width:600px){ header,.summary-bar,.controls,.grid-wrap,.alert-strip{padding-left:16px;padding-right:16px;} .grid{grid-template-columns:1fr 1fr;gap:6px;} .header-divider{display:none;} }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo-text">vero<span class="logo-dot"></span></span>
+  <div class="header-divider"></div>
+  <h1>Prazos de Instalação por Cidade</h1>
+  <div class="header-right">
+    <span class="sync-status" id="syncStatus"></span>
+    <button class="btn-refresh" id="btnRefresh" onclick="loadData()">
+      <svg width="14" height="14" viewBox="0 0 15 15" fill="none"><path d="M1.5 7.5a6 6 0 1 1 1.06 3.394M1.5 11V7.5H5" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Atualizar
+    </button>
+  </div>
+</header>
+<div class="loading-bar" id="loadingBar"></div>
+<div class="summary-bar" id="pills"></div>
+<div class="alert-strip" id="alertStrip"></div>
+<div class="controls">
+  <div class="search-wrap">
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+      <path d="M10 6.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-.687 3.727 2.96 2.96-.707.706-2.96-2.96a4.5 4.5 0 1 1 .707-.706Z" fill="currentColor"/>
+    </svg>
+    <input type="text" id="search" placeholder="Buscar cidade…" oninput="render()">
+  </div>
+  <span class="last-update" id="lastUpdate"></span>
+  <span class="result-count" id="count"></span>
+</div>
+<div class="grid-wrap">
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4vE1aSZmRbq5cA_ud4-Tu1YrEXoQs4WRZefzfkVa4Yyyh47nP2AFUxUqMCnEdFPa2OqgbBKQaF6a4/pub?output=csv&cachebust=';
+const PRAZO_VALID = new Set(['D0','D+1','D+2','>D+3','VAZIO']);
+const cfg = { 'D0':{cls:'d0',label:'D0'}, 'D+1':{cls:'d1',label:'D+1'}, 'D+2':{cls:'d2',label:'D+2'}, '>D+3':{cls:'d3',label:'>D+3'}, 'VAZIO':{cls:'vz',label:'—'} };
+const pillDefs = [
+  {key:'TODOS',label:'Todos',dot:'#F0185A'},
+  {key:'D0',label:'Mesmo dia (D0)',dot:'#22C55E'},
+  {key:'D+1',label:'D+1',dot:'#3B82F6'},
+  {key:'D+2',label:'D+2',dot:'#F59E0B'},
+  {key:'>D+3',label:'Acima D+3',dot:'#EF4444'},
+  {key:'VAZIO',label:'Sem prazo',dot:'#A8A69F'},
+];
+let active = 'TODOS';
+let dataset = [];
+function parseCSV(text) {
+  const lines = text.trim().split('\n').slice(1);
+  const result = [];
+  let skip = 0;
+  for (const line of lines) {
+    const parts = line.split(',').map(p => p.trim());
+    if (parts.length < 2) continue;
+    const city = parts[0].toUpperCase().trim();
+    const prazo = parts[1].toUpperCase().trim();
+    if (!city) continue;
+    if (!PRAZO_VALID.has(prazo)) { skip++; continue; }
+    result.push([city, prazo]);
+  }
+  const seen = new Set(), unique = [];
+  for (const [c,p] of result) {
+    const k = c+'|'+p;
+    if (!seen.has(k)) { seen.add(k); unique.push([c,p]); }
+  }
+  unique.sort((a,b) => a[0].localeCompare(b[0],'pt'));
+  return { data: unique, skipped: skip };
+}
+function toTitle(s) { return s.toLowerCase().replace(/(?:^|\s|[-])\S/g, c => c.toUpperCase()); }
+function buildPills() {
+  const c = {};
+  for (const [,p] of dataset) c[p] = (c[p]||0)+1;
+  const el = document.getElementById('pills');
+  el.innerHTML = '';
+  for (const {key,label,dot} of pillDefs) {
+    const n = key==='TODOS' ? dataset.length : (c[key]||0);
+    const d = document.createElement('div');
+    d.className = 'pill'+(active===key?' active':'');
+    d.innerHTML = '<span class="dot" style="background:'+dot+'"></span>'+label+'<span class="count">'+n+'</span>';
+    d.onclick = () => { active=key; buildPills(); render(); };
+    el.appendChild(d);
+  }
+}
+function render() {
+  const q = document.getElementById('search').value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  let shown = 0;
+  for (const [city, prazo] of dataset) {
+    if (active !== 'TODOS' && prazo !== active) continue;
+    const norm = city.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    if (q && !norm.includes(q)) continue;
+    const {cls,label} = cfg[prazo]||cfg['VAZIO'];
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = '<span class="card-city">'+toTitle(city)+'</span><span class="badge '+cls+'"><span class="dot"></span>'+label+'</span>';
+    grid.appendChild(card);
+    shown++;
+  }
+  document.getElementById('count').textContent = shown+' cidade'+(shown!==1?'s':'');
+  if (!shown) {
+    const e = document.createElement('div');
+    e.className = 'state-msg';
+    e.textContent = dataset.length === 0 ? 'Carregando dados...' : 'Nenhuma cidade encontrada.';
+    grid.appendChild(e);
+  }
+}
+async function loadData() {
+  const btn = document.getElementById('btnRefresh');
+  const bar = document.getElementById('loadingBar');
+  const status = document.getElementById('syncStatus');
+  const alert = document.getElementById('alertStrip');
+  btn.classList.add('loading');
+  bar.classList.add('active');
+  status.textContent = 'Sincronizando...';
+  alert.classList.remove('show');
+  try {
+    const res = await fetch(CSV_URL + Date.now());
+    if (!res.ok) throw new Error('Erro HTTP '+res.status);
+    const text = await res.text();
+    const { data, skipped: sk } = parseCSV(text);
+    if (data.length === 0) throw new Error('Nenhum dado válido encontrado.');
+    dataset = data;
+    active = 'TODOS';
+    const now = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('lastUpdate').textContent = 'Atualizado às '+now;
+    status.textContent = '✓ Sincronizado';
+    if (sk > 0) {
+      alert.textContent = '⚠️ '+sk+' linha'+(sk>1?'s foram ignoradas':' foi ignorada')+' por prazo inválido ou coluna cortada na planilha.';
+      alert.classList.add('show');
+    }
+    buildPills();
+    render();
+  } catch(err) {
+    status.textContent = '✗ Erro ao carregar';
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '<div class="state-msg error">Não foi possível carregar os dados da planilha. Verifique sua conexão e tente novamente.</div>';
+    console.error(err);
+  } finally {
+    btn.classList.remove('loading');
+    bar.classList.remove('active');
+    setTimeout(()=>{ if(status.textContent.startsWith('✓')) status.textContent=''; }, 3000);
+  }
+}
+loadData();
+</script>
+</body>
+</html>
