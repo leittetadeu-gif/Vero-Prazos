@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prazos de Instalação — Vero</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#FFF0F4; --surface:#FFFFFF; --border:#F5D0DA; --text:#1A1A18; --muted:#9A7880; --brand:#F0185A;
+    --d0-bg:#E6F4EC; --d0-fg:#166534; --d0-dot:#22C55E;
+    --d1-bg:#EBF3FF; --d1-fg:#1E40AF; --d1-dot:#3B82F6;
+    --d2-bg:#FEF3C7; --d2-fg:#92400E; --d2-dot:#F59E0B;
+    --d3-bg:#FEE2E2; --d3-fg:#991B1B; --d3-dot:#EF4444;
+    --vz-bg:#F3F3F0; --vz-fg:#52504D; --vz-dot:#A8A69F;
+  }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  header { background:#F0185A; padding:18px 40px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+  .logo-text { font-size:24px; font-weight:700; color:#fff; letter-spacing:-0.5px; display:flex; align-items:center; gap:3px; }
+  .logo-dot { width:8px; height:8px; border-radius:50%; background:#FFA630; display:inline-block; }
+  .header-divider { width:1px; height:32px; background:rgba(255,255,255,0.3); }
+  header h1 { font-size:13px; font-weight:400; color:rgba(255,255,255,0.80); letter-spacing:0.07em; text-transform:uppercase; }
+  .header-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .sync-status { font-size:11px; color:rgba(255,255,255,0.65); }
+  .btn-refresh {
+    background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);
+    color:#fff; font-family:'Inter',sans-serif; font-size:13px; font-weight:500;
+    padding:8px 16px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:7px;
+    transition:background 0.15s;
+  }
+  .btn-refresh:hover { background:rgba(255,255,255,0.28); }
+  .btn-refresh.loading svg { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .summary-bar { background:#d4144f; padding:12px 40px 16px; display:flex; gap:8px; flex-wrap:wrap; }
+  .pill {
+    display:flex; align-items:center; gap:6px;
+    background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.18);
+    border-radius:20px; padding:5px 12px; font-size:12px; color:rgba(255,255,255,0.8);
+    cursor:pointer; transition:background 0.15s; user-select:none;
+  }
+  .pill:hover,.pill.active { background:rgba(255,255,255,0.26); border-color:rgba(255,255,255,0.4); color:#fff; }
+  .pill .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .pill .count { font-family:'DM Mono',monospace; font-size:11px; opacity:0.7; margin-left:2px; }
+
+  /* View tabs (Instalação / Essencial) */
+  .view-tabs { background:#b81040; padding:0 40px; display:flex; gap:0; }
+  .view-tab {
+    padding:12px 20px; font-size:13px; font-weight:500; color:rgba(255,255,255,0.65);
+    cursor:pointer; border-bottom:3px solid transparent; transition:all 0.15s; user-select:none;
+  }
+  .view-tab:hover { color:#fff; }
+  .view-tab.active { color:#fff; border-bottom-color:#fff; }
+
+  .controls { padding:20px 40px 0; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .search-wrap { position:relative; flex:1; min-width:200px; max-width:340px; }
+  .search-wrap svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; }
+  input[type=text] {
+    width:100%; padding:9px 12px 9px 36px; border:1px solid var(--border);
+    border-radius:8px; font-family:'Inter',sans-serif; font-size:13px;
+    background:var(--surface); color:var(--text); outline:none; transition:border-color 0.15s;
+  }
+  input[type=text]:focus { border-color:var(--brand); }
+  input::placeholder { color:var(--muted); }
+  .result-count { font-size:12px; color:var(--muted); margin-left:auto; }
+  .last-update { font-size:11px; color:var(--muted); }
+
+  .region-tabs { padding:16px 40px 0; display:flex; gap:8px; flex-wrap:wrap; }
+  .region-tab {
+    padding:6px 16px; border-radius:20px; border:1.5px solid var(--border);
+    background:var(--surface); color:var(--muted); font-size:13px; font-weight:500;
+    cursor:pointer; transition:all 0.15s; user-select:none;
+  }
+  .region-tab:hover { border-color:var(--brand); color:var(--brand); }
+  .region-tab.active { background:var(--brand); border-color:var(--brand); color:#fff; }
+
+  .loading-bar { height:3px; background:#F5D0DA; display:none; }
+  .loading-bar.active {
+    display:block;
+    background: linear-gradient(90deg, #F0185A 0%, #ff6b9d 50%, #F0185A 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s infinite;
+  }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  .content-wrap { padding:16px 40px 40px; }
+  .region-section { margin-bottom:32px; }
+  .region-section.hidden { display:none; }
+  .region-header {
+    display:flex; align-items:center; gap:12px;
+    margin-bottom:12px; padding-bottom:10px;
+    border-bottom:2px solid var(--border);
+  }
+  .region-title { font-size:15px; font-weight:600; color:var(--text); }
+  .region-badge {
+    background:var(--brand); color:#fff; font-size:11px; font-weight:500;
+    padding:2px 8px; border-radius:10px; font-family:'DM Mono',monospace;
+  }
+
+  /* Essencial banner */
+  .essencial-banner {
+    background:linear-gradient(135deg,#1A3A5C,#2a5a8c);
+    border-radius:12px; padding:16px 20px; margin-bottom:20px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .essencial-banner-icon { font-size:22px; }
+  .essencial-banner-text { color:#fff; }
+  .essencial-banner-title { font-size:14px; font-weight:600; margin-bottom:2px; }
+  .essencial-banner-sub { font-size:12px; opacity:0.75; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px; }
+  .card {
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:13px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    transition:box-shadow 0.15s,transform 0.15s;
+  }
+  .card.essencial-card { border-left:3px solid #2a5a8c; }
+  .card.essencial-card .card-city-sub { font-size:10px; color:var(--muted); margin-top:2px; }
+  .card:hover { box-shadow:0 4px 16px rgba(240,24,90,0.10); transform:translateY(-1px); }
+  .card-city { font-size:13px; font-weight:500; color:var(--text); line-height:1.3; }
+  .badge {
+    display:flex; align-items:center; gap:5px; border-radius:6px; padding:3px 9px;
+    font-family:'DM Mono',monospace; font-size:11px; font-weight:500; flex-shrink:0; white-space:nowrap;
+  }
+  .badge .dot { width:6px; height:6px; border-radius:50%; }
+  .d0{background:var(--d0-bg);color:var(--d0-fg);} .d0 .dot{background:var(--d0-dot);}
+  .d1{background:var(--d1-bg);color:var(--d1-fg);} .d1 .dot{background:var(--d1-dot);}
+  .d2{background:var(--d2-bg);color:var(--d2-fg);} .d2 .dot{background:var(--d2-dot);}
+  .d3{background:var(--d3-bg);color:var(--d3-fg);} .d3 .dot{background:var(--d3-dot);}
+  .vz{background:var(--vz-bg);color:var(--vz-fg);} .vz .dot{background:var(--vz-dot);}
+  .not-found{background:#F3F3F0;color:#9A7880;} .not-found .dot{background:#ccc;}
+
+  .state-msg { text-align:center; padding:60px 0; color:var(--muted); font-size:14px; }
+  .state-msg.error { color:#991B1B; }
+  .alert-strip {
+    margin:12px 40px 0; background:#FEF3C7; border:1px solid #FCD34D;
+    border-radius:8px; padding:10px 14px; font-size:12px; color:#92400E; display:none;
+  }
+  .alert-strip.show { display:block; }
+
+  @media(max-width:600px){
+    header,.summary-bar,.controls,.content-wrap,.alert-strip,.region-tabs,.view-tabs{padding-left:16px;padding-right:16px;}
+    .grid{grid-template-columns:1fr 1fr;gap:6px;}
+    .header-divider{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo-text">vero<span class="logo-dot"></span></span>
+  <div class="header-divider"></div>
+  <h1>Prazos de Instalação por Cidade</h1>
+  <div class="header-right">
+    <span class="sync-status" id="syncStatus"></span>
+    <button class="btn-refresh" id="btnRefresh" onclick="loadData()">
+      <svg width="14" height="14" viewBox="0 0 15 15" fill="none"><path d="M1.5 7.5a6 6 0 1 1 1.06 3.394M1.5 11V7.5H5" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Atualizar
+    </button>
+  </div>
+</header>
+
+<div class="loading-bar" id="loadingBar"></div>
+<div class="summary-bar" id="pills"></div>
+<div class="view-tabs">
+  <div class="view-tab active" id="tab-instalacao" onclick="switchView('instalacao')">📦 Instalação</div>
+  <div class="view-tab" id="tab-essencial" onclick="switchView('essencial')">⭐ Vero Essencial</div>
+</div>
+<div class="alert-strip" id="alertStrip"></div>
+
+<div class="controls">
+  <div class="search-wrap">
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+      <path d="M10 6.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-.687 3.727 2.96 2.96-.707.706-2.96-2.96a4.5 4.5 0 1 1 .707-.706Z" fill="currentColor"/>
+    </svg>
+    <input type="text" id="search" placeholder="Buscar cidade…" oninput="applyFilters()">
+  </div>
+  <span class="last-update" id="lastUpdate"></span>
+  <span class="result-count" id="count"></span>
+</div>
+
+<div class="region-tabs" id="regionTabs"></div>
+<div class="content-wrap" id="contentWrap"></div>
+
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4vE1aSZmRbq5cA_ud4-Tu1YrEXoQs4WRZefzfkVa4Yyyh47nP2AFUxUqMCnEdFPa2OqgbBKQaF6a4/pub?output=csv&cachebust=';
+
+const PRAZO_VALID = new Set(['D0','D+1','D+2','>D+3','VAZIO']);
+const cfg = {
+  'D0':{cls:'d0',label:'D0'}, 'D+1':{cls:'d1',label:'D+1'},
+  'D+2':{cls:'d2',label:'D+2'}, '>D+3':{cls:'d3',label:'>D+3'}, 'VAZIO':{cls:'vz',label:'—'},
+};
+const pillDefs = [
+  {key:'TODOS',label:'Todos',dot:'#F0185A'},
+  {key:'D0',label:'Mesmo dia (D0)',dot:'#22C55E'},
+  {key:'D+1',label:'D+1',dot:'#3B82F6'},
+  {key:'D+2',label:'D+2',dot:'#F59E0B'},
+  {key:'>D+3',label:'Acima D+3',dot:'#EF4444'},
+  {key:'VAZIO',label:'Sem prazo',dot:'#A8A69F'},
+];
+
+const REGIOES = {
+  'MG': ['SANTOS DUMONT','CAXAMBU','BICAS','LEOPOLDINA','LIMA DUARTE','MATIAS BARBOSA','JUIZ DE FORA','JUIZ DE FORA NORTE ALTA','MAR DE ESPANHA','PEQUERI','SÃO LOURENÇO','CORONEL FABRICIANO','GOVERNADOR VALADARES','IPATINGA','MANHUAÇU','TEÓFILO OTONI','BOM DESPACHO','BRUMADINHO','DIVINÓPOLIS','IGARAPÉ','NOVA SERRANA','PARÁ DE MINAS','UAI FI','UAI FI SUL','EIXO LESTE BH','CAETÉ','EIXO LESTE JM','EIXO LESTE PL','EIXO LESTE SL','CONGONHAS','ENTRE RIOS','ITABIRITO','LAFAIETE','MARIANA','OURO PRETO','OURO BRANCO','PONTE NOVA','VIÇOSA','BARBACENA','BARROSO','CARANDAÍ','SÃO JOÃO DEL REI'],
+  'CO': ['BRASÍLIA I','BRASÍLIA II','LUZIÂNIA','NOVA GAMA','VALPARAÍSO','GOIÂNIA','GOIANIRA','GUAPÓ','INHUMAS','PALMEIRAS DE GOIÁS','RIO VERDE','SANTA HELENA DE GOIÁS','CALDAS NOVAS','CATALÃO','GOIATUBA','PIRACANJUBA','ALTO HORIZONTE','MARA ROSA','PORANGATU','CAMPO GRANDE','DOURADOS','FÁTIMA DO SUL','ANAURILÂNDIA','BATAGUASSU','NOVA ANDRADINA','TRÊS LAGOAS'],
+  'SP': ['AGUDOS','BARRA BONITA','BAURU','BROTAS','DOIS CÓRREGOS','IACANGA','JAÚ','MINEIROS DO TIETÊ','PEDERNEIRAS','PIRATININGA','ANDRADINA','ARAÇATUBA','BIRIGUI','GUARARAPES','ILHA SOLTEIRA','LINS','PEREIRA BARRETO','PROMISSÃO','VALPARAÍSO','FERNANDÓPOLIS','JALES','SANTA FÉ DO SUL','SÃO JOSÉ DO RIO PRETO','MARTINÓPOLIS','PRESIDENTE BERNARDES','PRESIDENTE EPITÁCIO','PRESIDENTE PRUDENTE','PRESIDENTE VENCESLAU','SANTO ANASTÁCIO','AMERICANA','LEME','LIMEIRA','PIRACICABA','PIRASSUNUNGA','SÃO JOÃO DA BOA VISTA','ITU','PIEDADE','SOROCABA','TATUÍ','ARUJÁ','ITAQUAQUECETUBA','POÁ','RIBEIRÃO PIRES','APARECIDA','CAÇAPAVA','CRUZEIRO','SÃO JOSÉ DOS CAMPOS','CAIEIRAS','CAJAMAR','CARAPICUÍBA','SÃO ROQUE'],
+  'SUL': ['CAMPO ERÊ','FRANCISCO BELTRÃO','PATO BRANCO','SÃO DOMINGOS','SÃO LOURENÇO PR','XANXERÊ','PRAIA PINHEIRA','SERRARIA','ANCHIETA','DIONÍSIO','SÃO JOSÉ DO CERRITO','SÃO MIGUEL DO OESTE','ANTÔNIO CARLOS','BIGUAÇU','CONTINENTE','FLORIANÓPOLIS NORTE','FLORIANÓPOLIS SUL','FORQUILHAS','GOVERNADOR CELSO RAMOS','ITAPEMA','PALHOÇA CENTRO','PALHOÇA PRAIA FORA','SANTANA','SANTO AMARO','SÃO JOSÉ CENTRO','TIJUCAS','ITAQUI','SANTIAGO','SÃO BORJA','SLG','URUGUAIANA','CRUZ ALTA','FREDERICO','IJUÍ','PANAMBI','SANTO ÂNGELO','SANTO AUGUSTO','DOIS IRMÃOS','ESTÂNCIA VELHA','MONTENEGRO','NOVO HAMBURGO','PRESIDENTE LUCENA','SÃO SEBASTIÃO DO CAÍ','CANOAS','CHARQUEADAS','GRAVATAÍ','NOVA SANTA RITA','VALE DOS SINOS','VENÂNCIO AIRES','VIAMÃO','ARROIO DO SAL','CAPÃO DA CANOA','CIDREIRA','GLORINHA','IMBÉ','MAQUINÉ','OSÓRIO','SANTO ANTÔNIO DA PATRULHA','TERRA DE AREIA','TORRES','TRAMANDAÍ','TRÊS CACHOEIRAS'],
+};
+
+// Cidades fixas do Vero Essencial
+const ESSENCIAL_CIDADES = [
+  'ARUJÁ','CAPÃO DA CANOA','CORONEL FABRICIANO','CRUZEIRO','ESTÂNCIA VELHA',
+  'GOVERNADOR VALADARES','JALES','LEME','NOVA SANTA RITA','NOVO HAMBURGO',
+  'PORANGATU','SÃO JOSÉ DOS CAMPOS','TATUÍ','XANXERÊ','CATALÃO',
+  'DOIS IRMÃOS','DOURADOS','FERNANDÓPOLIS','FRANCISCO BELTRÃO','OSÓRIO',
+  'PIEDADE','PRESIDENTE VENCESLAU','SANTA FÉ DO SUL','VENÂNCIO AIRES',
+  'PEDERNEIRAS','BRASÍLIA I','AMERICANA','SÃO JOSÉ DO RIO PRETO',
+  'TIJUCAS','BRASÍLIA II','ITAPEMA',
+];
+
+const cidadeParaRegiao = {};
+for (const [reg, cidades] of Object.entries(REGIOES)) {
+  for (const c of cidades) cidadeParaRegiao[c] = reg;
+}
+const REGION_LABELS = { MG:'Minas Gerais', SP:'São Paulo', SUL:'Sul', CO:'Centro-Oeste' };
+const REGION_ORDER = ['MG','SP','SUL','CO'];
+
+let activePrazo = 'TODOS';
+let activeRegiao = 'TODAS';
+let activeView = 'instalacao';
+let dataset = [];
+
+function dataSignature(data) { return data.map(([c,p])=>c+'|'+p).join(';'); }
+function saveDate(t) { try { localStorage.setItem('vero_last_update', t); } catch(e){} }
+function getSavedSignature() { try { return localStorage.getItem('vero_signature')||''; } catch(e){ return ''; } }
+function saveSignature(s) { try { localStorage.setItem('vero_signature', s); } catch(e){} }
+function loadSavedDate() { try { const s=localStorage.getItem('vero_last_update'); if(s) document.getElementById('lastUpdate').textContent=s; } catch(e){} }
+function toTitle(s) { return s.toLowerCase().replace(/(?:^|\s|[-])\S/g,c=>c.toUpperCase()); }
+function norm(s) { return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
+function getRegiao(city) { return cidadeParaRegiao[city.toUpperCase()] || 'OUTRAS'; }
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n').slice(1);
+  const result = [];
+  let skip = 0;
+  for (const line of lines) {
+    const parts = line.split(',').map(p=>p.trim());
+    if (parts.length < 2) continue;
+    const city = parts[0].toUpperCase().trim();
+    const prazo = parts[1].toUpperCase().trim();
+    if (!city) continue;
+    if (!PRAZO_VALID.has(prazo)) { skip++; continue; }
+    result.push([city, prazo]);
+  }
+  const seen = new Set(), unique = [];
+  for (const [c,p] of result) {
+    const k=c+'|'+p;
+    if (!seen.has(k)) { seen.add(k); unique.push([c,p]); }
+  }
+  unique.sort((a,b)=>a[0].localeCompare(b[0],'pt'));
+  return { data: unique, skipped: skip };
+}
+
+function buildPills() {
+  const c={};
+  for (const [,p] of dataset) c[p]=(c[p]||0)+1;
+  const el=document.getElementById('pills');
+  el.innerHTML='';
+  for (const {key,label,dot} of pillDefs) {
+    const n=key==='TODOS'?dataset.length:(c[key]||0);
+    const d=document.createElement('div');
+    d.className='pill'+(activePrazo===key?' active':'');
+    d.innerHTML='<span class="dot" style="background:'+dot+'"></span>'+label+'<span class="count">'+n+'</span>';
+    d.onclick=()=>{ activePrazo=key; buildPills(); applyFilters(); };
+    el.appendChild(d);
+  }
+}
+
+function switchView(view) {
+  activeView = view;
+  document.getElementById('tab-instalacao').className='view-tab'+(view==='instalacao'?' active':'');
+  document.getElementById('tab-essencial').className='view-tab'+(view==='essencial'?' active':'');
+  const regionTabs = document.getElementById('regionTabs');
+  regionTabs.style.display = view==='instalacao' ? '' : 'none';
+  buildSections();
+}
+
+function buildRegionTabs() {
+  const el=document.getElementById('regionTabs');
+  el.innerHTML='';
+  const allBtn=document.createElement('div');
+  allBtn.className='region-tab'+(activeRegiao==='TODAS'?' active':'');
+  allBtn.textContent='Todas as regiões';
+  allBtn.onclick=()=>{ activeRegiao='TODAS'; buildRegionTabs(); applyFilters(); };
+  el.appendChild(allBtn);
+  for (const reg of REGION_ORDER) {
+    const btn=document.createElement('div');
+    btn.className='region-tab'+(activeRegiao===reg?' active':'');
+    btn.textContent=REGION_LABELS[reg]||reg;
+    btn.onclick=()=>{ activeRegiao=reg; buildRegionTabs(); applyFilters(); };
+    el.appendChild(btn);
+  }
+}
+
+function buildSections() {
+  const wrap=document.getElementById('contentWrap');
+  wrap.innerHTML='';
+  if (dataset.length===0) {
+    const e=document.createElement('div');
+    e.className='state-msg'; e.textContent='Carregando dados...';
+    wrap.appendChild(e); return;
+  }
+
+  if (activeView === 'essencial') {
+    buildEssencialSection(wrap);
+    return;
+  }
+
+  // View: Instalação
+  const byRegion={};
+  for (const reg of [...REGION_ORDER,'OUTRAS']) byRegion[reg]=[];
+  for (const [city,prazo] of dataset) {
+    const reg=getRegiao(city);
+    if (!byRegion[reg]) byRegion[reg]=[];
+    byRegion[reg].push([city,prazo]);
+  }
+  const regsToShow = REGION_ORDER.filter(r=>byRegion[r].length>0);
+  if (byRegion['OUTRAS']&&byRegion['OUTRAS'].length>0) regsToShow.push('OUTRAS');
+
+  for (const reg of regsToShow) {
+    const section=document.createElement('div');
+    section.className='region-section';
+    section.dataset.region=reg;
+    const header=document.createElement('div');
+    header.className='region-header';
+    header.innerHTML='<span class="region-title">'+( REGION_LABELS[reg]||reg)+'</span><span class="region-badge" id="badge-'+reg+'">0</span>';
+    section.appendChild(header);
+    const grid=document.createElement('div');
+    grid.className='grid'; grid.id='grid-'+reg;
+    section.appendChild(grid);
+    wrap.appendChild(section);
+  }
+  applyFilters();
+}
+
+function buildEssencialSection(wrap) {
+  // Banner
+  const banner=document.createElement('div');
+  banner.className='essencial-banner';
+  banner.innerHTML='<div class="essencial-banner-icon">⭐</div><div class="essencial-banner-text"><div class="essencial-banner-title">Vero Essencial — Cidades habilitadas</div><div class="essencial-banner-sub">Prazos atualizados automaticamente da planilha</div></div>';
+  wrap.appendChild(banner);
+
+  // Seção única
+  const section=document.createElement('div');
+  section.className='region-section';
+  section.dataset.region='ESSENCIAL';
+  const header=document.createElement('div');
+  header.className='region-header';
+  header.innerHTML='<span class="region-title">Cidades Vero Essencial</span><span class="region-badge" id="badge-ESSENCIAL">'+ESSENCIAL_CIDADES.length+'</span>';
+  section.appendChild(header);
+  const grid=document.createElement('div');
+  grid.className='grid'; grid.id='grid-ESSENCIAL';
+  section.appendChild(grid);
+  wrap.appendChild(section);
+
+  applyFilters();
+}
+
+function applyFilters() {
+  const q=norm(document.getElementById('search').value||'');
+
+  if (activeView === 'essencial') {
+    const grid=document.getElementById('grid-ESSENCIAL');
+    if (!grid) return;
+    grid.innerHTML='';
+    let shown=0;
+    const dataMap=new Map(dataset.map(([c,p])=>[c.toUpperCase(),p]));
+
+    const sorted=[...ESSENCIAL_CIDADES].sort((a,b)=>a.localeCompare(b,'pt'));
+    for (const city of sorted) {
+      if (q && !norm(city).includes(q)) continue;
+      const prazo=dataMap.get(city.toUpperCase()) || null;
+      const card=document.createElement('div');
+      card.className='card essencial-card';
+      if (prazo) {
+        const {cls,label}=cfg[prazo]||cfg['VAZIO'];
+        card.innerHTML='<span class="card-city">'+toTitle(city)+'</span><span class="badge '+cls+'"><span class="dot"></span>'+label+'</span>';
+      } else {
+        card.innerHTML='<span class="card-city">'+toTitle(city)+'</span><span class="badge not-found"><span class="dot"></span>—</span>';
+      }
+      grid.appendChild(card);
+      shown++;
+    }
+    document.getElementById('count').textContent=shown+' cidade'+(shown!==1?'s':'');
+    return;
+  }
+
+  // View instalação
+  let total=0;
+  const sections=document.querySelectorAll('.region-section');
+  sections.forEach(sec=>{
+    const reg=sec.dataset.region;
+    const showReg=(activeRegiao==='TODAS'||activeRegiao===reg);
+    const grid=document.getElementById('grid-'+reg);
+    if (!grid) return;
+    grid.innerHTML='';
+    let shown=0;
+    for (const [city,prazo] of dataset) {
+      if (getRegiao(city)!==reg) continue;
+      if (activePrazo!=='TODOS'&&prazo!==activePrazo) continue;
+      if (q&&!norm(city).includes(q)) continue;
+      const {cls,label}=cfg[prazo]||cfg['VAZIO'];
+      const card=document.createElement('div');
+      card.className='card';
+      card.innerHTML='<span class="card-city">'+toTitle(city)+'</span><span class="badge '+cls+'"><span class="dot"></span>'+label+'</span>';
+      grid.appendChild(card);
+      shown++;
+    }
+    const badge=document.getElementById('badge-'+reg);
+    if (badge) badge.textContent=shown;
+    sec.classList.toggle('hidden', !showReg||shown===0);
+    if (showReg) total+=shown;
+  });
+  document.getElementById('count').textContent=total+' cidade'+(total!==1?'s':'');
+}
+
+async function loadData() {
+  const btn=document.getElementById('btnRefresh');
+  const bar=document.getElementById('loadingBar');
+  const status=document.getElementById('syncStatus');
+  const alert=document.getElementById('alertStrip');
+  btn.classList.add('loading');
+  bar.classList.add('active');
+  status.textContent='Sincronizando...';
+  alert.classList.remove('show');
+
+  try {
+    const res=await fetch(CSV_URL+Date.now());
+    if (!res.ok) throw new Error('Erro HTTP '+res.status);
+    const text=await res.text();
+    const {data,skipped:sk}=parseCSV(text);
+    if (data.length===0) throw new Error('Nenhum dado válido.');
+
+    const newSig=dataSignature(data);
+    const changed=newSig!==getSavedSignature();
+    dataset=data;
+
+    if (changed) {
+      const now=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      const txt='Atualizado às '+now;
+      document.getElementById('lastUpdate').textContent=txt;
+      saveDate(txt); saveSignature(newSig);
+      status.textContent='✓ Dados atualizados!';
+    } else {
+      status.textContent='✓ Sem alterações';
+    }
+
+    if (sk>0) {
+      alert.textContent='⚠️ '+sk+' linha'+(sk>1?'s foram ignoradas':' foi ignorada')+' por prazo inválido.';
+      alert.classList.add('show');
+    }
+
+    buildPills();
+    buildRegionTabs();
+    buildSections();
+  } catch(err) {
+    status.textContent='✗ Erro ao carregar';
+    document.getElementById('contentWrap').innerHTML='<div class="state-msg error">Não foi possível carregar os dados. Verifique sua conexão.</div>';
+    console.error(err);
+  } finally {
+    btn.classList.remove('loading');
+    bar.classList.remove('active');
+    setTimeout(()=>{ if(status.textContent.startsWith('✓')) status.textContent=''; },3000);
+  }
+}
+
+loadSavedDate();
+loadData();
+</script>
+</body>
+</html>
